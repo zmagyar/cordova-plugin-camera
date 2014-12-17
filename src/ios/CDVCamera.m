@@ -689,6 +689,13 @@ static NSSet* org_apache_cordova_validArrowDirections;
 
 @end
 
+@interface CDVCameraPicker()
+{
+    UIStatusBarStyle _prevStatusBarStyle; // _previous is private to UIImagePickerController!
+}
+
+@end
+
 @implementation CDVCameraPicker
 
 @synthesize quality, postUrl;
@@ -710,14 +717,32 @@ static NSSet* org_apache_cordova_validArrowDirections;
 - (UIViewController*)childViewControllerForStatusBarHidden {
     return nil;
 }
-    
-- (void)viewWillAppear:(BOOL)animated {
+
+- (void) refreshStatusBarStyle
+{
     SEL sel = NSSelectorFromString(@"setNeedsStatusBarAppearanceUpdate");
     if ([self respondsToSelector:sel]) {
         [self performSelector:sel withObject:nil afterDelay:0];
     }
-    
-    [super viewWillAppear:animated];
 }
+    
+- (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
+
+    // fix for CB-5265 (Apple bug!!)
+    _prevStatusBarStyle = [UIApplication sharedApplication].statusBarStyle;
+    [UIApplication sharedApplication].statusBarStyle = UIStatusBarStyleDefault;
+
+    [self refreshStatusBarStyle];
+}
+
+- (void)viewWillDisappear:(BOOL)animated {
+    // fix for CB-5265 (Apple bug!!)
+    [UIApplication sharedApplication].statusBarStyle = _prevStatusBarStyle;
+    
+    [self refreshStatusBarStyle];
+    [super viewWillDisappear:animated];
+}
+
 
 @end
